@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.nhantruonggg.clientapp",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:83:C5:E3:A3:89:3B:61:A8:1C:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78"
+      ]
+    }
+  }
+]
