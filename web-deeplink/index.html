@@ -76,18 +76,80 @@
     </div>
 
     <script>
-        // Phân tích tham số bài viết từ link web (?id=d1)
+        // Cấu hình URL API Backend (Thay đổi theo tên miền thực tế của bạn)
+        const API_BASE_URL = 'https://tumulous-petra-microdont.ngrok-free.dev';
+
+        // Phân tích tham số bài viết từ link web (?id=...)
         const urlParams = new URLSearchParams(window.location.search);
-        const postId = urlParams.get('id') || 'd1';
+        const postId = urlParams.get('id');
 
         // Tạo Deep Link qua màn hình Home tab của App và truyền redirectPostId
-        const deepLink = `clientapp://(tabs)?redirectPostId=${postId}`;
+        const deepLink = `clientapp://(tabs)?redirectPostId=${postId || 'd1'}`;
 
         // Gán link cho nút bấm thủ công
         document.getElementById('direct-btn').href = deepLink;
 
         // Tự động kích hoạt mở App ngay khi vào trang web
         window.location.href = deepLink;
+
+        // Hàm loại bỏ các thẻ HTML để lấy chuỗi văn bản thuần túy làm mô tả
+        function stripHtml(html) {
+            const temp = document.createElement("div");
+            temp.innerHTML = html;
+            return temp.textContent || temp.innerText || "";
+        }
+
+        // Lấy thông tin bài viết từ Database để cập nhật giao diện và thẻ Meta
+        if (postId && postId !== 'd1') {
+            fetch(`${API_BASE_URL}/handbooks/${postId}`)
+                .then(response => response.json())
+                .then(res => {
+                    if (res && res.data && res.data.handbook) {
+                        const handbook = res.data.handbook;
+                        const title = handbook.Title || 'Cẩm Nang Chăm Sóc Thú Cưng - The Pet Villa';
+                        const thumbnail = handbook.Thumbnail || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600';
+                        
+                        // Lấy mô tả ngắn từ nội dung Content
+                        let description = '';
+                        if (handbook.Content) {
+                            const cleanText = stripHtml(handbook.Content);
+                            description = cleanText.substring(0, 150).trim() + '...';
+                        } else {
+                            description = 'Kiến thức chăm sóc chó mèo chuẩn y khoa từ các chuyên gia hàng đầu.';
+                        }
+
+                        // 1. Cập nhật tiêu đề trang web hiển thị trên trình duyệt
+                        document.title = title;
+
+                        // 2. Cập nhật các thẻ meta Open Graph (cho trình duyệt hoặc crawlers hỗ trợ JS)
+                        const metaTitle = document.querySelector('meta[property="og:title"]');
+                        if (metaTitle) metaTitle.setAttribute('content', title);
+
+                        const metaDesc = document.querySelector('meta[property="og:description"]');
+                        if (metaDesc) metaDesc.setAttribute('content', description);
+
+                        const metaImage = document.querySelector('meta[property="og:image"]');
+                        if (metaImage) metaImage.setAttribute('content', thumbnail);
+
+                        // 3. Cập nhật hiển thị giao diện của trang web
+                        // Thay đổi tiêu đề chính
+                        const titleEl = document.querySelector('h1');
+                        if (titleEl) titleEl.innerText = title;
+
+                        // Hiển thị thêm ảnh bìa bài viết thay cho Mascot nếu lấy được
+                        const mascotImg = document.querySelector('img[alt="Mascot"]');
+                        if (mascotImg) {
+                            mascotImg.src = thumbnail;
+                            mascotImg.className = "w-full h-full object-cover";
+                            // Bỏ dịch chuyển của mascot cũ
+                            mascotImg.classList.remove("translate-y-1");
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi khi tải thông tin bài viết từ API:", err);
+                });
+        }
 
         // Thiết lập fallback sau 3.5 giây nếu không phản hồi
         setTimeout(() => {
